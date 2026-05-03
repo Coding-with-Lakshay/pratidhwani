@@ -636,7 +636,7 @@ export function Report() {
               <h3 id="ch3-1" className="font-display text-xl mt-8 mb-3">3.1 Topology overview</h3>
               <p>
                 Pratidhwani is deployed as three independent Cloud Run services in{" "}
-                <code>asia-south1</code> within the <code><your-project></code> GCP project:{" "}
+                <code>asia-south1</code> within the <code>{"<your-project>"}</code> GCP project:{" "}
                 <code>pratidhwani-web</code> (public ingress, React + nginx),{" "}
                 <code>pratidhwani-api</code> (internal-only ingress, FastAPI), and{" "}
                 <code>pratidhwani-db</code> (internal-only ingress, PocketBase backed by
@@ -1124,7 +1124,7 @@ ms
               <h3 id="ch9-1" className="font-display text-xl mt-8 mb-3">9.1 Cloud Run services</h3>
               <p>
                 All three services are deployed in <code>asia-south1</code> in the{" "}
-                <code><your-project></code> GCP project. <code>pratidhwani-web</code> uses 256 MiB
+                <code>{"<your-project>"}</code> GCP project. <code>pratidhwani-web</code> uses 256 MiB
                 memory and concurrency 200; <code>pratidhwani-api</code> uses 512 MiB with
                 concurrency 80; <code>pratidhwani-db</code> uses 512 MiB with concurrency 4 and{" "}
                 <code>min-instances=1</code> to match the SQLite single-writer model.
