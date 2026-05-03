@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+.env
+.env.local
+*.log
+.vite
+README.md
+STATUS.md
+deploy.sh

@@ -1,0 +1,42 @@
+# PocketBase test database for integration tests.
+# Bring up:   docker compose -f tests/docker-compose.yml up -d
+# Tear down:  docker compose -f tests/docker-compose.yml down -v
+
+services:
+  pratidhwani-db:
+    # Pinned PocketBase image; pratidhwani-db service uses 0.22 in prod.
+    image: ghcr.io/muchobien/pocketbase:0.22.21
+    container_name: pratidhwani-db-test
+    command: ["serve", "--http=0.0.0.0:8090"]
+    environment:
+      - TZ=UTC
+    ports:
+      - "8090:8090"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8090/api/health"]
+      interval: 3s
+      timeout: 2s
+      retries: 20
+    volumes:
+      - pb_test_data:/pb_data
+
+  # Auto-create the admin user on first boot. Idempotent.
+  pratidhwani-db-init:
+    image: ghcr.io/muchobien/pocketbase:0.22.21
+    depends_on:
+      pratidhwani-db:
+        condition: service_healthy
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -e
+        # Use the same volume so the new admin lives in the same DB.
+        # 'admins create' is no-op if the email already exists.
+        /usr/local/bin/pocketbase --dir /pb_data admin create admin@example.com admin12345 || true
+        echo "admin ready"
+    volumes:
+      - pb_test_data:/pb_data
+    restart: "no"
+
+volumes:
+  pb_test_data: {}

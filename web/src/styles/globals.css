@@ -1,0 +1,387 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light theme — paper-and-ink */
+    --paper: #f6f3ec;
+    --paper-raised: #ffffff;
+    --paper-sunk: #ede9df;
+    --ink: #14130f;
+    --ink-soft: #2a2823;
+    --ink-mute: #6b6657;
+    --ink-line: rgba(20, 19, 15, 0.12);
+    --accent: #b04a2f;
+    --accent-soft: #f0d4b9;
+    --signal-latency: #2c4a8a;
+    --signal-carbon: #2f6b3a;
+    --signal-cost: #8a6d2c;
+    --signal-warn: #b04a2f;
+    --signal-ok: #2f6b3a;
+    --grid: rgba(20, 19, 15, 0.04);
+    color-scheme: light;
+  }
+
+  :root.dark,
+  :root[data-theme="dark"] {
+    --paper: #0b0b0d;
+    --paper-raised: #131317;
+    --paper-sunk: #08080a;
+    --ink: #f5f1e8;
+    --ink-soft: #d6d2c6;
+    --ink-mute: #8b8678;
+    --ink-line: rgba(245, 241, 232, 0.12);
+    --accent: #e07a4a;
+    --accent-soft: #4a2618;
+    --signal-latency: #7aa6ff;
+    --signal-carbon: #6ed091;
+    --signal-cost: #f0c87a;
+    --signal-warn: #e07a4a;
+    --signal-ok: #6ed091;
+    --grid: rgba(245, 241, 232, 0.05);
+    color-scheme: dark;
+  }
+
+  /* High contrast theme — WCAG 2.2 AAA */
+  :root[data-theme="hc-light"] {
+    --paper: #ffffff;
+    --paper-raised: #ffffff;
+    --paper-sunk: #f0f0f0;
+    --ink: #000000;
+    --ink-soft: #000000;
+    --ink-mute: #1a1a1a;
+    --ink-line: #000000;
+    --accent: #b8001f;
+    --accent-soft: #ffe0e3;
+    --signal-latency: #0033a0;
+    --signal-carbon: #006b2c;
+    --signal-cost: #6b4500;
+    --signal-warn: #b8001f;
+    --signal-ok: #006b2c;
+    --grid: #000000;
+    color-scheme: light;
+  }
+
+  :root[data-theme="hc-dark"] {
+    --paper: #000000;
+    --paper-raised: #000000;
+    --paper-sunk: #0a0a0a;
+    --ink: #ffffff;
+    --ink-soft: #ffffff;
+    --ink-mute: #e5e5e5;
+    --ink-line: #ffffff;
+    --accent: #ffd166;
+    --accent-soft: #3a2d00;
+    --signal-latency: #99c2ff;
+    --signal-carbon: #7eff9f;
+    --signal-cost: #ffd166;
+    --signal-warn: #ff8866;
+    --signal-ok: #7eff9f;
+    --grid: #ffffff;
+    color-scheme: dark;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: "Inter Tight", Inter, system-ui, -apple-system, sans-serif;
+    font-feature-settings: "ss01", "cv11", "calt";
+    min-height: 100dvh;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--paper);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Skip link */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.75rem 1rem;
+    z-index: 9999;
+    font-weight: 600;
+  }
+  .skip-link:focus {
+    left: 1rem;
+    top: 1rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .container-wide {
+    width: 100%;
+    max-width: 88rem;
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 3vw, 2.5rem);
+  }
+
+  .card {
+    background: var(--paper-raised);
+    border: 1px solid var(--ink-line);
+    border-radius: 0.75rem;
+    transition: border-color 200ms ease, transform 200ms ease;
+  }
+
+  .card-interactive {
+    @apply card;
+    cursor: pointer;
+  }
+  .card-interactive:hover {
+    border-color: var(--ink-soft);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    border: 1px solid var(--ink-line);
+    background: var(--paper-raised);
+    color: var(--ink);
+    transition: background 150ms ease, border-color 150ms ease;
+    line-height: 1;
+    min-height: 2.25rem;
+  }
+  .btn:hover { border-color: var(--ink-soft); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .btn-primary:hover { background: var(--ink-soft); }
+
+  .btn-accent {
+    background: var(--accent);
+    color: var(--paper);
+    border-color: var(--accent);
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    border: 1px solid var(--ink-line);
+    background: var(--paper-sunk);
+    color: var(--ink-soft);
+    text-transform: uppercase;
+  }
+
+  .num-tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum", "ss01";
+  }
+
+  .label-eyebrow {
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--ink-mute);
+  }
+
+  .divider-dot::after {
+    content: "·";
+    margin-inline: 0.6rem;
+    color: var(--ink-mute);
+  }
+
+  .grid-bg {
+    background-image: linear-gradient(to right, var(--grid) 1px, transparent 1px),
+                      linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .text-pretty { text-wrap: pretty; }
+
+  .scrollbar-quiet::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scrollbar-quiet::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-quiet::-webkit-scrollbar-thumb {
+    background: var(--ink-line);
+    border-radius: 4px;
+  }
+  .scrollbar-quiet::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-mute);
+  }
+}
+
+/* Print styles for /report — Shoolini University capstone (A4) */
+@media print {
+  /* Default page (body matter): 25mm margins, 30mm left binding edge,
+     project name in header-left, page number in header-right. */
+  @page {
+    size: A4;
+    margin: 25mm 25mm 25mm 30mm;
+
+    @top-left {
+      content: "Pratidhwani — Predictive Carbon-Aware Serverless Gateway";
+      font-family: "Inter Tight", Inter, sans-serif;
+      font-size: 9pt;
+      color: #555;
+    }
+    @top-right {
+      content: counter(page);
+      font-family: "Inter Tight", Inter, sans-serif;
+      font-size: 9pt;
+      color: #555;
+    }
+  }
+
+  /* Title page is page i with no header/footer. */
+  @page :first {
+    margin: 25mm 25mm 25mm 30mm;
+    @top-left { content: ""; }
+    @top-right { content: ""; }
+  }
+
+  /* Front matter: lower-roman page numbers. Chrome/Edge honor named pages;
+     Firefox/Safari fall back to default Arabic — documented in STATUS.md. */
+  @page front {
+    size: A4;
+    margin: 25mm 25mm 25mm 30mm;
+    @top-left {
+      content: "Pratidhwani — Predictive Carbon-Aware Serverless Gateway";
+      font-family: "Inter Tight", Inter, sans-serif;
+      font-size: 9pt;
+      color: #555;
+    }
+    @top-right {
+      content: counter(page, lower-roman);
+      font-family: "Inter Tight", Inter, sans-serif;
+      font-size: 9pt;
+      color: #555;
+    }
+  }
+
+  @page body {
+    size: A4;
+    margin: 25mm 25mm 25mm 30mm;
+    @top-left {
+      content: "Pratidhwani — Predictive Carbon-Aware Serverless Gateway";
+      font-family: "Inter Tight", Inter, sans-serif;
+      font-size: 9pt;
+      color: #555;
+    }
+    @top-right {
+      content: counter(page);
+      font-family: "Inter Tight", Inter, sans-serif;
+      font-size: 9pt;
+      color: #555;
+    }
+  }
+
+  :root {
+    --paper: #ffffff !important;
+    --paper-raised: #ffffff !important;
+    --paper-sunk: #ffffff !important;
+    --ink: #000000 !important;
+    --ink-soft: #1a1a1a !important;
+    --ink-mute: #444444 !important;
+    --ink-line: #999999 !important;
+    --grid: transparent !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  .no-print, nav, header.app-header, footer.app-footer, .print-hide {
+    display: none !important;
+  }
+
+  .print-only { display: block !important; }
+
+  .report-body {
+    font-family: "Source Serif 4", Georgia, serif;
+    text-align: justify;
+    hyphens: auto;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+
+  .report-body h1, .report-body h2, .report-body h3, .report-body h4 {
+    font-family: "Inter Tight", Inter, sans-serif;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .report-body .title-page {
+    page-break-after: always;
+    break-after: page;
+  }
+
+  .report-body .front-matter { page: front; }
+  .report-body .body-matter  { page: body; counter-reset: page; }
+
+  .report-body h2.chapter,
+  .report-body section.chapter {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .report-body p, .report-body li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  .report-body figure, .report-body table {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  a {
+    color: #000000 !important;
+    text-decoration: none;
+  }
+
+  .report-body a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #666;
+  }
+}
+
+.print-only { display: none; }
