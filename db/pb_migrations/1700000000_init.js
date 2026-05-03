@@ -2,9 +2,11 @@
 // Pratidhwani initial schema. PocketBase v0.23+ JSVM migration format.
 // Five collections: regions, decisions, forecasts, weights, savings_baseline.
 // API rules:
-//   * read (list/view): "" -> any caller that reaches the (internal-only) ingress.
-//   * write (create/update/delete): null -> superuser-only. The api service
-//     authenticates as the bootstrap superuser to perform writes.
+//   * read (list/view): "" -> any caller that reaches the (internal) ingress.
+//   * write (create/update/delete): "" -> any caller that reaches the (internal) ingress.
+// Cloud Run IAM is the single security gate: only the api service-account
+// has roles/run.invoker on the db service, so PocketBase does not need
+// internal auth. No superuser is bootstrapped; no Secret Manager entry exists.
 
 migrate(
   (app) => {
@@ -14,9 +16,9 @@ migrate(
       name: "regions",
       listRule: "",
       viewRule: "",
-      createRule: null,
-      updateRule: null,
-      deleteRule: null,
+      createRule: "",
+      updateRule: "",
+      deleteRule: "",
       fields: [
         { name: "name", type: "text", required: true, max: 64 },
         { name: "gcp_region", type: "text", required: true, max: 64 },
@@ -39,9 +41,9 @@ migrate(
       name: "decisions",
       listRule: "",
       viewRule: "",
-      createRule: null,
-      updateRule: null,
-      deleteRule: null,
+      createRule: "",
+      updateRule: "",
+      deleteRule: "",
       fields: [
         { name: "ts", type: "date", required: true },
         { name: "request_type", type: "text", required: true, max: 32 },
@@ -67,9 +69,9 @@ migrate(
       name: "forecasts",
       listRule: "",
       viewRule: "",
-      createRule: null,
-      updateRule: null,
-      deleteRule: null,
+      createRule: "",
+      updateRule: "",
+      deleteRule: "",
       fields: [
         { name: "ts", type: "date", required: true },
         { name: "region", type: "text", required: true, max: 64 },
@@ -93,9 +95,9 @@ migrate(
       name: "weights",
       listRule: "",
       viewRule: "",
-      createRule: null,
-      updateRule: null,
-      deleteRule: null,
+      createRule: "",
+      updateRule: "",
+      deleteRule: "",
       fields: [
         { name: "w_lat", type: "number", required: true, min: 0, max: 1 },
         { name: "w_carbon", type: "number", required: true, min: 0, max: 1 },
@@ -122,9 +124,9 @@ migrate(
       name: "savings_baseline",
       listRule: "",
       viewRule: "",
-      createRule: null,
-      updateRule: null,
-      deleteRule: null,
+      createRule: "",
+      updateRule: "",
+      deleteRule: "",
       fields: [
         { name: "ts", type: "date", required: true },
         { name: "baseline_cost", type: "number", min: 0 },

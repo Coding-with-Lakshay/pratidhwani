@@ -20,7 +20,34 @@ export const api = {
     request<Decision[]>(
       `/decisions?limit=${limit}${since ? `&since=${encodeURIComponent(since)}` : ""}`,
     ),
-  savings: () => request<Savings>("/metrics/savings"),
+  savings: () =>
+    request<Record<string, unknown>>("/metrics/savings").then((d): Savings => {
+      const num = (k: string) => {
+        const v = d[k];
+        return typeof v === "number" && Number.isFinite(v) ? v : 0;
+      };
+      const cb = num("cost_baseline");
+      const co = num("cost_ours");
+      const carb_b = num("carbon_baseline");
+      const carb_o = num("carbon_ours");
+      const samples = num("samples");
+      // The API exposes cost_baseline/cost_ours in INR; convert to a rough USD
+      // for the secondary tile (1 USD ≈ 83 INR — illustrative only, FX is not
+      // a research claim of this work).
+      const inrSaved = Math.max(0, cb - co);
+      const usdSaved = inrSaved / 83;
+      return {
+        cold_starts_averted_today: samples,
+        gco2_saved_today: Math.max(0, carb_b - carb_o),
+        inr_saved_today: inrSaved,
+        usd_saved_today: usdSaved,
+        p95_reduction_pct: num("cost_saved_pct"),
+        baseline_cost_today: cb,
+        our_cost_today: co,
+        baseline_carbon_today: carb_b,
+        our_carbon_today: carb_o,
+      };
+    }),
   weights: () => request<Weights>("/weights"),
   setWeights: (w: Weights) =>
     request<Weights>("/weights", { method: "POST", body: JSON.stringify(w) }),

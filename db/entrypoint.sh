@@ -1,10 +1,10 @@
 #!/bin/sh
 # Pratidhwani DB entrypoint.
-#  1. ensure /pb_data is writable (GCS Fuse mount)
-#  2. upsert the initial superuser from PB_ADMIN_EMAIL / PB_ADMIN_PASSWORD
-#  3. run JS migrations (pocketbase serve auto-applies pb_migrations/*.js)
-#  4. exec `pocketbase serve` on $PORT
-#  5. background task: when server is up, seed regions if empty
+#  1. ensure /pb_data is writable (ephemeral container disk)
+#  2. exec `pocketbase serve` on $PORT — auto-applies pb_migrations/*.js
+#  3. background task: when server is up, seed regions if empty (collection
+#     rules are open to internal callers, so no auth is needed; Cloud Run
+#     IAM is the single security gate).
 set -eu
 
 PORT="${PORT:-8080}"
@@ -19,30 +19,13 @@ log() {
     "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" "$2"
 }
 
-if [ -z "${PB_ADMIN_EMAIL:-}" ] || [ -z "${PB_ADMIN_PASSWORD:-}" ]; then
-  log "ERROR" "PB_ADMIN_EMAIL and PB_ADMIN_PASSWORD must be set (use --set-secrets in deploy)"
-  exit 1
-fi
-
 mkdir -p "${PB_DATA_DIR}"
 if ! [ -w "${PB_DATA_DIR}" ]; then
-  log "ERROR" "PB_DATA_DIR ${PB_DATA_DIR} is not writable - check GCS Fuse mount"
+  log "ERROR" "PB_DATA_DIR ${PB_DATA_DIR} is not writable"
   exit 1
 fi
 
-# Idempotent superuser bootstrap. `superuser upsert` creates if missing,
-# updates the password otherwise. Safe to run on every cold start.
-log "INFO" "upserting superuser ${PB_ADMIN_EMAIL}"
-pocketbase superuser upsert \
-  "${PB_ADMIN_EMAIL}" "${PB_ADMIN_PASSWORD}" \
-  --dir "${PB_DATA_DIR}" \
-  --migrationsDir "${PB_MIGRATIONS_DIR}" \
-  >/tmp/pb_su.log 2>&1 || {
-    log "ERROR" "superuser upsert failed: $(tr -d '\n' </tmp/pb_su.log)"
-    exit 1
-  }
-
-# Background seeder runs after the server starts.
+# Background seeder — open writes mean no token needed.
 seed_regions() {
   i=0
   while [ $i -lt 60 ]; do
@@ -56,18 +39,7 @@ seed_regions() {
     return 0
   fi
 
-  TOKEN_RESP="$(curl -fsS -X POST \
-    -H "Content-Type: application/json" \
-    -d "{\"identity\":\"${PB_ADMIN_EMAIL}\",\"password\":\"${PB_ADMIN_PASSWORD}\"}" \
-    "http://127.0.0.1:${PORT}/api/collections/_superusers/auth-with-password" 2>/dev/null || echo '')"
-  TOKEN="$(printf '%s' "${TOKEN_RESP}" | jq -r '.token // empty')"
-  if [ -z "${TOKEN}" ]; then
-    log "WARN" "seed: superuser auth failed, skipping"
-    return 0
-  fi
-
   COUNT="$(curl -fsS \
-    -H "Authorization: ${TOKEN}" \
     "http://127.0.0.1:${PORT}/api/collections/regions/records?perPage=1&fields=id" \
     | jq -r '.totalItems // 0' 2>/dev/null || echo 0)"
 
@@ -85,7 +57,6 @@ seed_regions() {
   jq -c '.[]' "${PB_SEED_DIR}/regions.json" | while IFS= read -r row; do
     HTTP_CODE="$(curl -s -o /tmp/seed_resp -w '%{http_code}' \
       -X POST \
-      -H "Authorization: ${TOKEN}" \
       -H "Content-Type: application/json" \
       -d "${row}" \
       "http://127.0.0.1:${PORT}/api/collections/regions/records" || echo 000)"
