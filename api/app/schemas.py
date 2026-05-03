@@ -99,6 +99,35 @@ class ReplayResponse(BaseModel):
     sample_decisions: list[dict[str, Any]]
 
 
+class SimReplayDelta(BaseModel):
+    cold_starts_averted: int = 0
+    gco2_saved: float = 0.0
+    p95_baseline_ms: float = 0.0
+    p95_pratidhwani_ms: float = 0.0
+    cost_baseline: float = 0.0
+    cost_pratidhwani: float = 0.0
+
+
+class SimReplayStatusResponse(BaseModel):
+    state: str = "idle"
+    progress: float = 0.0
+    ticks_done: int = 0
+    ticks_total: int = 0
+    delta: SimReplayDelta | None = None
+    profile: str | None = None
+    minutes: int | None = None
+    requests_simulated: int | None = None
+    cost_saved_pct: float | None = None
+    carbon_saved_pct: float | None = None
+    cost_baseline: float | None = None
+    cost_ours: float | None = None
+    carbon_baseline: float | None = None
+    carbon_ours: float | None = None
+    p95_ours_ms: float | None = None
+    p95_baseline_ms: float | None = None
+    ts: str | None = None
+
+
 class HealthzResponse(BaseModel):
     status: str
     db: bool

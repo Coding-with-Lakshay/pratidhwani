@@ -185,6 +185,33 @@ def test_sim_replay_returns_savings_signs(client, stub_client):
     assert body["p95_baseline_ms"] > 0
 
 
+def test_sim_replay_accepts_no_body(client, stub_client):
+    # Frontend hits POST /sim/replay with no JSON body — must not 422.
+    r = client.post("/api/v1/sim/replay")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["requests_simulated"] > 0
+
+
+def test_sim_replay_status_returns_idle_then_complete(client, stub_client):
+    r = client.get("/api/v1/sim/replay/status")
+    assert r.status_code == 200
+    # State may be idle or complete depending on test ordering; both shapes valid.
+    assert r.json()["state"] in {"idle", "complete"}
+
+    client.post(
+        "/api/v1/sim/replay",
+        json={"minutes": 1, "profile": "diurnal_wiki", "qps_peak": 5.0, "seed": 7, "write_decisions": False},
+    )
+    r2 = client.get("/api/v1/sim/replay/status")
+    assert r2.status_code == 200
+    body = r2.json()
+    assert body["state"] == "complete"
+    assert body["delta"] is not None
+    assert body["requests_simulated"] > 0
+    assert body["delta"]["p95_pratidhwani_ms"] > 0
+
+
 def test_sim_replay_with_carbon_heavy_weights_saves_carbon(client, stub_client):
     # Push weights toward carbon and the simulator should *demonstrate*
     # carbon savings vs round-robin baseline. This is what the dashboard demo

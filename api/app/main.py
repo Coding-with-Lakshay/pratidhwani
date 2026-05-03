@@ -8,6 +8,7 @@ Endpoints (all under /api/v1):
     GET  /regions                 — current region health view
     POST /weights                 — update routing weights (singleton)
     POST /sim/replay              — synthetic traffic replay simulator
+    GET  /sim/replay/status       — last replay snapshot for the dashboard
 
 Top-level:
     GET  /healthz                 — health (200 if DB reachable, else 503)

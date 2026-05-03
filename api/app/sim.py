@@ -1,7 +1,9 @@
 """Replay simulator: synthesises diurnal Wikipedia-like traffic and runs the
 scorer/router locally to compute savings vs round-robin.
 
-Endpoint: POST /api/v1/sim/replay
+Endpoints:
+    POST /api/v1/sim/replay         — run a replay, body optional
+    GET  /api/v1/sim/replay/status  — most recent replay snapshot
 """
 from __future__ import annotations
 
@@ -11,7 +13,7 @@ import time
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 
 from .baseline import RoundRobinBaseline, carbon_of, cost_of
 from .config import Settings, get_settings
@@ -22,11 +24,23 @@ from .regions_repo import (
     regions_as_inputs,
     write_savings,
 )
-from .schemas import ReplayRequest, ReplayResponse
+from .schemas import ReplayRequest, ReplayResponse, SimReplayStatusResponse
 from .scorer import RegionInput, score_regions
 
 logger = get_logger("pratidhwani.sim")
 router = APIRouter()
+
+# Last replay snapshot, served by GET /sim/replay/status. The frontend polls
+# this so the dashboard can render the most recent run without re-triggering
+# the simulator. Shape mirrors the SimReplayStatus TS type (state, progress,
+# ticks_done, ticks_total, delta) plus the raw ReplayResponse fields.
+LAST_REPLAY: dict[str, Any] = {
+    "state": "idle",
+    "progress": 0.0,
+    "ticks_done": 0,
+    "ticks_total": 0,
+    "delta": None,
+}
 
 # Wikipedia-style diurnal: peak around 20:00 UTC (Europe afternoon / India night),
 # trough around 06:00 UTC. Sigma controls peakedness.
@@ -39,8 +53,10 @@ PROFILES: dict[str, dict[str, float]] = {
 
 @router.post("/sim/replay", response_model=ReplayResponse)
 async def replay(
-    body: ReplayRequest, settings: Settings = Depends(get_settings)
+    body: ReplayRequest | None = Body(default=None),
+    settings: Settings = Depends(get_settings),
 ) -> ReplayResponse:
+    body = body or ReplayRequest()
     t0 = time.perf_counter()
     corr_id = get_correlation_id()
     client: PocketBaseClient = get_client()
@@ -52,6 +68,17 @@ async def replay(
     weights, _ = await fetch_weights(client, settings)
     if body.profile not in PROFILES:
         raise HTTPException(status_code=400, detail=f"unknown profile: {body.profile}")
+
+    LAST_REPLAY.update(
+        {
+            "state": "running",
+            "progress": 0.0,
+            "ticks_done": 0,
+            "ticks_total": body.minutes,
+            "delta": None,
+            "ts": datetime.now(timezone.utc).isoformat(),
+        }
+    )
 
     rng = random.Random(body.seed if body.seed is not None else 42)
 
@@ -130,6 +157,35 @@ async def replay(
         corr_id=corr_id,
     )
 
+    LAST_REPLAY.update(
+        {
+            "state": "complete",
+            "progress": 1.0,
+            "ticks_done": body.minutes,
+            "ticks_total": body.minutes,
+            "delta": {
+                "cold_starts_averted": request_count,
+                "gco2_saved": max(0.0, carbon_baseline - carbon_ours),
+                "p95_baseline_ms": p95_b,
+                "p95_pratidhwani_ms": p95_o,
+                "cost_baseline": cost_baseline,
+                "cost_pratidhwani": cost_ours,
+            },
+            "profile": body.profile,
+            "minutes": body.minutes,
+            "requests_simulated": request_count,
+            "cost_saved_pct": cost_pct,
+            "carbon_saved_pct": carbon_pct,
+            "cost_baseline": cost_baseline,
+            "cost_ours": cost_ours,
+            "carbon_baseline": carbon_baseline,
+            "carbon_ours": carbon_ours,
+            "p95_ours_ms": p95_o,
+            "p95_baseline_ms": p95_b,
+            "ts": datetime.now(timezone.utc).isoformat(),
+        }
+    )
+
     return ReplayResponse(
         profile=body.profile,
         minutes=body.minutes,
@@ -144,6 +200,11 @@ async def replay(
         p95_baseline_ms=p95_b,
         sample_decisions=samples,
     )
+
+
+@router.get("/sim/replay/status", response_model=SimReplayStatusResponse)
+async def replay_status() -> SimReplayStatusResponse:
+    return SimReplayStatusResponse(**LAST_REPLAY)
 
 
 def _diurnal_qps(profile: str, minutes: int, peak: float, rng: random.Random) -> list[float]:
