@@ -169,13 +169,13 @@ export const slides: SlideDef[] = [
   },
   {
     id: "hook",
-    title: "The five seconds your user waits.",
+    title: "The cold-start tail.",
     notes: "Open emotional. The story is: serverless is fast except when it isn't, and that's the whole pitch.",
     render: () => (
       <SlideShell eyebrow="Why this exists">
         <Reveal>
           <h2 className="font-display text-display-xl tracking-tightest text-balance">
-            Five seconds.
+            Slow on the first hit.
           </h2>
         </Reveal>
         <Reveal>
@@ -185,9 +185,16 @@ export const slides: SlideDef[] = [
           </p>
         </Reveal>
         <Reveal>
-          <p className="mt-8 font-mono text-sm text-ink-mute">
-            Cloud Run cold-start p99 (Python) — observed 4.2–6.1 s on cold containers, 2024 GCP
-            internal benchmark.
+          <p className="mt-8 font-mono text-sm text-ink-mute max-w-3xl text-pretty">
+            Peer-reviewed measurements show 53–68% of average function startup latency is
+            recoverable headroom over state-of-the-art production schedulers — yet schedulers
+            leave it on the table.
+          </p>
+        </Reveal>
+        <Reveal>
+          <p className="mt-3 font-mono text-xs text-ink-mute">
+            References — [8] Yu et al., RainbowCake, ASPLOS '24 (68%) · [9] Zhou et al.,
+            Multi-Level Container Reuse, IPDPS '24 (53%).
           </p>
         </Reveal>
       </SlideShell>
@@ -227,12 +234,18 @@ export const slides: SlideDef[] = [
               Grid-carbon mismatch.
             </p>
             <p className="mt-3 text-ink-soft text-pretty">
-              Carbon-aware schedulers — Carbon Explorer, CASPER, GAIA, Treehouse — target batch
-              jobs and training. None do request-level FaaS routing across grid intensity, latency
-              budget, and spot price together.
+              Carbon-aware schedulers — Carbon Explorer [11], CASPER [12], GreenCourier [13],
+              CASA [14] — each drop one of latency-budget, carbon, or spot-price. None do
+              request-level FaaS routing across all three together.
             </p>
           </Reveal>
         </div>
+        <Reveal>
+          <p className="mt-10 font-mono text-xs text-ink-mute max-w-5xl">
+            References — [11] Acun et al., ASPLOS '23 · [12] Souza et al., IGSC '23 ·
+            [13] Chadha et al., WOSC '23 · [14] Qi et al., IGSC '24.
+          </p>
+        </Reveal>
       </SlideShell>
     ),
   },
@@ -254,17 +267,17 @@ export const slides: SlideDef[] = [
             {
               tag: "missing",
               h: "Multi-signal fusion",
-              p: "Hour of day × geography × tenant class. Most systems see only the first.",
+              p: "Hour of day × geography × tenant class. Per-function predictors [4], [5], [8] see only the first.",
             },
             {
               tag: "missing",
               h: "Confidence-weighted budget",
-              p: "Pre-warm only when CI × cold-cost > warm-budget. Today: fixed-rate pings.",
+              p: "Pre-warm only when CI × cold-cost > warm-budget. AQUATOPE [7] is the only system that reasons about uncertainty — and only inside one workflow.",
             },
             {
               tag: "missing",
               h: "Cross-function transfer",
-              p: "A spike pattern learned for one function rarely lifts a sister function.",
+              p: "Multi-Level Container Reuse [9] shares warm containers across similar functions, but never transfers prediction models across tenants.",
             },
           ].map((b) => (
             <Reveal key={b.h} className="card p-5">
@@ -274,6 +287,13 @@ export const slides: SlideDef[] = [
             </Reveal>
           ))}
         </div>
+        <Reveal>
+          <p className="mt-10 font-mono text-xs text-ink-mute max-w-5xl">
+            References — [4] Roy et al., IceBreaker, ASPLOS '22 · [5] Yang et al., INFless,
+            ASPLOS '22 · [7] Zhou et al., AQUATOPE, ASPLOS '23 · [8] Yu et al., RainbowCake,
+            ASPLOS '24 · [9] Zhou et al., Multi-Level Container Reuse, IPDPS '24.
+          </p>
+        </Reveal>
       </SlideShell>
     ),
   },
@@ -290,12 +310,14 @@ export const slides: SlideDef[] = [
         </Reveal>
         <div className="mt-10 grid md:grid-cols-2 gap-8 max-w-5xl">
           <Reveal className="card p-6">
-            <p className="label-eyebrow">prior work · batch / training</p>
+            <p className="label-eyebrow">prior work · single-axis or non-FaaS</p>
             <ul className="mt-3 space-y-2 text-sm text-ink-soft">
-              <li><span className="font-mono">Carbon Explorer</span> · datacenter siting</li>
-              <li><span className="font-mono">CASPER</span> · sustainable scheduling</li>
-              <li><span className="font-mono">GAIA</span> · ML training shifts</li>
-              <li><span className="font-mono">Treehouse</span> · low-carbon batch placement</li>
+              <li><span className="font-mono">Carbon Explorer [11]</span> · datacenter design, batch shifting</li>
+              <li><span className="font-mono">CASPER [12]</span> · web-service migration, drops cost</li>
+              <li><span className="font-mono">GreenCourier [13]</span> · FaaS, carbon-only</li>
+              <li><span className="font-mono">CASA [14]</span> · single-cluster autoscaling</li>
+              <li><span className="font-mono">EcoLife [15]</span> · embodied carbon, hardware tier</li>
+              <li><span className="font-mono">LowCarb [16]</span> · single-region keep-alive vs carbon</li>
             </ul>
           </Reveal>
           <Reveal className="card p-6 relative">
@@ -320,6 +342,13 @@ export const slides: SlideDef[] = [
             </p>
           </Reveal>
         </div>
+        <Reveal>
+          <p className="mt-10 font-mono text-xs text-ink-mute max-w-5xl">
+            References — [11] Acun et al., ASPLOS '23 · [12] Souza et al., IGSC '23 ·
+            [13] Chadha et al., WOSC '23 · [14] Qi et al., IGSC '24 · [15] Jiang et al., SC '24 ·
+            [16] Roy &amp; Tiwari, HPCA '26.
+          </p>
+        </Reveal>
       </SlideShell>
     ),
   },
@@ -380,6 +409,13 @@ export const slides: SlideDef[] = [
         </Reveal>
         <Reveal className="mt-10">
           <ArchitectureDiagram />
+        </Reveal>
+        <Reveal>
+          <p className="mt-6 font-mono text-xs text-ink-mute max-w-5xl">
+            Carbon-intensity figures are a daily snapshot from Electricity Maps, mid-2024.
+            Pricing tracked against{" "}
+            <span className="underline decoration-dotted">cloud.google.com/run/pricing</span>.
+          </p>
         </Reveal>
       </SlideShell>
     ),
@@ -545,7 +581,7 @@ export const slides: SlideDef[] = [
   {
     id: "why-now",
     title: "Why now — and why this matters for India 2047.",
-    notes: "Tie back to mission. Indian datacenters are growing 30% YoY; serverless adoption is following.",
+    notes: "Tie back to mission. Serverless adoption is rising; grid-carbon intensity varies sharply across regions.",
     background: "accent",
     render: () => (
       <div className="w-full h-full flex flex-col justify-center px-[7vw] py-[6vh] text-paper">
@@ -554,7 +590,7 @@ export const slides: SlideDef[] = [
         </Reveal>
         <Reveal>
           <h2 className="font-display text-display-xl tracking-tightest mt-4 text-balance leading-[0.95]">
-            India’s digital workload is doubling. Its grid is greening — unevenly.
+            Carbon intensity ranges 5× across regions. Routers ignore it.
           </h2>
         </Reveal>
         <Reveal>
@@ -564,7 +600,14 @@ export const slides: SlideDef[] = [
           </p>
         </Reveal>
         <Reveal>
-          <p className="mt-12 font-mono text-sm text-paper/60">
+          <p className="mt-6 font-mono text-xs text-paper/60 max-w-4xl">
+            asia-south1 (Mumbai) 700 vs europe-west1 (St.Ghislain) 140 gCO₂/kWh — Electricity
+            Maps daily snapshot, mid-2024. Carbon-aware FaaS scheduling shows 13–70%
+            reductions depending on the policy [12], [13].
+          </p>
+        </Reveal>
+        <Reveal>
+          <p className="mt-8 font-mono text-sm text-paper/60">
             #AatmanirbharBharat · @India2047
           </p>
         </Reveal>
@@ -717,9 +760,9 @@ function ArchitectureDiagram() {
       <line x1="420" y1="180" x2="510" y2="280" stroke="var(--ink-soft)" strokeWidth="1.5" markerEnd="url(#arr)" />
 
       {[
-        { x: 520, y: 50, name: "asia-south1", note: "Mumbai · 712 g/kWh" },
-        { x: 520, y: 150, name: "europe-west1", note: "St.Ghislain · 168 g/kWh" },
-        { x: 520, y: 250, name: "us-central1", note: "Council Bluffs · 396 g/kWh" },
+        { x: 520, y: 50, name: "asia-south1", note: "Mumbai · 700 gCO₂/kWh" },
+        { x: 520, y: 150, name: "europe-west1", note: "St.Ghislain · 140 gCO₂/kWh" },
+        { x: 520, y: 250, name: "us-central1", note: "Council Bluffs · 410 gCO₂/kWh" },
       ].map((r) => (
         <g key={r.name}>
           <rect x={r.x} y={r.y} width="240" height="60" rx="10" fill="var(--paper-raised)" stroke="var(--ink-line)" />

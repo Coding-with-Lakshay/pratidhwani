@@ -372,6 +372,47 @@
     break-inside: avoid;
   }
 
+  /* Belt-and-suspenders: every front-matter chapter — TOC, LoF, LoT,
+     abbreviations, acknowledgement, abstract — gets its own page in print. */
+  .report-body section#toc,
+  .report-body section#lof,
+  .report-body section#lot,
+  .report-body section#abbr,
+  .report-body section#acknowledgement,
+  .report-body section#abstract,
+  .report-body section#references,
+  .report-body section#appendix {
+    page-break-before: always;
+    break-before: page;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  /* Figures and SVGs scale to the print column width, never overflow. */
+  .report-body figure svg,
+  .report-body figure img,
+  .report-body figure pre {
+    max-width: 100%;
+    height: auto;
+    box-sizing: border-box;
+  }
+
+  /* Inline SVG figures keep an explicit small font for legibility on A4. */
+  .report-body figure svg text {
+    font-size: 10pt;
+  }
+
+  /* Captions stay with their figure / table (avoid orphaned caption). */
+  .report-body figcaption,
+  .report-body caption {
+    page-break-before: avoid;
+    break-before: avoid;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Reset link decoration globally for print, except keep the URL after
+     external links so a printed PDF is self-contained. */
   a {
     color: #000000 !important;
     text-decoration: none;
@@ -381,6 +422,23 @@
     content: " (" attr(href) ")";
     font-size: 9pt;
     color: #666;
+  }
+
+  /* Hide internal anchor URLs (the "→" indicators in TOC, etc.). */
+  .report-body a[href^="#"]::after {
+    content: "";
+  }
+
+  /* Title page must not carry a running header / footer. */
+  .report-body .title-page {
+    page: title;
+  }
+
+  @page title {
+    size: A4;
+    margin: 25mm 25mm 25mm 30mm;
+    @top-left  { content: ""; }
+    @top-right { content: ""; }
   }
 }
 

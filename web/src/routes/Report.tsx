@@ -61,10 +61,11 @@ export function Report() {
 
   const figures = useMemo(
     () => [
-      { id: "fig-arch", n: 1, t: "Three-service Cloud Run topology of Pratidhwani in asia-south1." },
-      { id: "fig-flow", n: 2, t: "End-to-end request flow through forecaster, scorer, and gateway." },
-      { id: "fig-scorer", n: 3, t: "Per-tick min-max normalization across active candidate regions." },
-      { id: "fig-replay", n: 4, t: "24-hour replay: p95 latency of Pratidhwani vs round-robin baseline." },
+      { id: "fig-arch", n: 1, t: "System architecture: three Cloud Run services with strict ingress and IAM-gated cross-service calls." },
+      { id: "fig-forecaster", n: 2, t: "Forecaster pipeline: Holt-Winters and EWMA blend with a 95% confidence interval." },
+      { id: "fig-scorer", n: 3, t: "Multi-objective scoring across three regions on each axis (latency, carbon, cost)." },
+      { id: "fig-decisions", n: 4, t: "Decision feed sample — three /route decisions with chosen region, score, and reasons." },
+      { id: "fig-replay", n: 5, t: "Replay-simulator savings deltas: baseline vs Pratidhwani on cost and carbon." },
     ],
     [],
   );
@@ -73,9 +74,12 @@ export function Report() {
     () => [
       { id: "tab-fr", n: 1, t: "Functional requirements (FR-1 to FR-9)." },
       { id: "tab-nfr", n: 2, t: "Non-functional requirements." },
-      { id: "tab-stack", n: 3, t: "Service-by-service implementation stack." },
-      { id: "tab-savings", n: 4, t: "Aggregate replay deltas across the 24-hour window." },
-      { id: "tab-collections", n: 5, t: "PocketBase collections and primary fields." },
+      { id: "tab-regions", n: 3, t: "Three demo regions: grid-carbon intensity, base latency, and $ per million requests." },
+      { id: "tab-weights", n: 4, t: "Default routing weights and what each scorer axis encodes." },
+      { id: "tab-comparison", n: 5, t: "Pratidhwani vs CASPER and LowCarb: axes covered and axes dropped." },
+      { id: "tab-stack", n: 6, t: "Service-by-service implementation stack." },
+      { id: "tab-savings", n: 7, t: "Aggregate replay deltas across the 24-hour window." },
+      { id: "tab-collections", n: 8, t: "PocketBase collections and primary fields." },
     ],
     [],
   );
@@ -644,20 +648,13 @@ export function Report() {
                 permitted public ingress. Service-to-service calls use IAM-issued identity
                 tokens.
               </p>
-              <figure id="fig-arch" className="my-6 border border-ink-line p-4 rounded">
-                <pre className="font-mono text-xs leading-relaxed text-ink-soft overflow-x-auto">{`
- user ─► [ pratidhwani-web | nginx + React ] ─/api/*─► [ pratidhwani-api | FastAPI ]
-                                                          │
-                                                          ▼
-                                                  [ pratidhwani-db | PocketBase + GCS-Fuse ]
-                                                          │
-                                  ┌───────────────────────┼───────────────────────┐
-                                  ▼                       ▼                       ▼
-                          asia-south1            europe-west1              us-central1
-                          (Mumbai)               (St.Ghislain)             (Council Bluffs)
-                `}</pre>
-                <figcaption className="text-xs text-ink-mute mt-2">
-                  <strong>Fig. 1.</strong> Three-service Cloud Run topology of Pratidhwani.
+              <figure id="fig-arch" className="my-6 border border-ink-line p-4 rounded bg-paper-raised">
+                <ArchitectureSvg />
+                <figcaption className="text-xs text-ink-mute mt-3">
+                  <strong>Fig. 1.</strong> System architecture: three Cloud Run services in
+                  asia-south1, with public ingress on the web container only and IAM tokens
+                  gating every cross-service call. The gateway routes per-request to one of
+                  three serverless regions.
                 </figcaption>
               </figure>
 
@@ -669,20 +666,13 @@ export function Report() {
                 runs the scorer, writes a decision row to PocketBase, and returns the chosen
                 region URL plus a list of human-readable reasons.
               </p>
-              <figure id="fig-flow" className="my-6 border border-ink-line p-4 rounded">
-                <pre className="font-mono text-xs leading-relaxed text-ink-soft overflow-x-auto">{`
- client ──► /route { request_type, payload_size }
+              <pre className="font-mono text-xs leading-relaxed bg-paper-sunk p-4 rounded border border-ink-line overflow-x-auto my-4">{` client ──► /route { request_type, payload_size }
               │
               ├─► fetch latest Region rows           (PocketBase)
               ├─► score(r) for each candidate region (in-memory)
               ├─► veto regions over SLO              (latency budget)
               ├─► write Decision row                 (PocketBase)
-              └─► return { region, region_url, decision_id, score, reasons[] }
-                `}</pre>
-                <figcaption className="text-xs text-ink-mute mt-2">
-                  <strong>Fig. 2.</strong> End-to-end request flow.
-                </figcaption>
-              </figure>
+              └─► return { region, region_url, decision_id, score, reasons[] }`}</pre>
 
               <h3 id="ch3-3" className="font-display text-xl mt-8 mb-3">3.3 Component design</h3>
               <p>
@@ -696,10 +686,128 @@ export function Report() {
                 <code>POST /weights</code>, and <code>GET /healthz</code>.
               </p>
 
-              <h3 id="ch3-4" className="font-display text-xl mt-8 mb-3">3.4 Data model</h3>
+              <h3 id="ch3-4" className="font-display text-xl mt-8 mb-3">3.4 Demo regions</h3>
+              <p>
+                The deployed system seeds three Google Cloud regions chosen to span both grid
+                carbon intensity and base latency from the Indian audience. The values are
+                grounded: carbon intensities track an Electricity Maps daily snapshot mid-2024,
+                base latency is the round-trip from asia-south1, and price is read from the
+                published Cloud Run unit cost.
+              </p>
+              <table id="tab-regions" className="w-full text-sm border-collapse my-4">
+                <caption className="text-left text-xs text-ink-mute mb-2">
+                  <strong>Table 3.</strong> Three demo regions and their per-tick scoring inputs.
+                </caption>
+                <thead className="border-b border-ink-line">
+                  <tr>
+                    <th className="text-left py-2 pr-4">region</th>
+                    <th className="text-left py-2 pr-4 font-mono">gcp id</th>
+                    <th className="text-right py-2 pr-4">carbon (gCO₂/kWh)</th>
+                    <th className="text-right py-2 pr-4">base latency (ms)</th>
+                    <th className="text-right py-2">price ($/M req)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ink-line num-tabular">
+                  {[
+                    ["Mumbai (India)", "asia-south1", "700", "25", "24.00"],
+                    ["St. Ghislain (Belgium)", "europe-west1", "140", "130", "22.00"],
+                    ["Council Bluffs (Iowa, USA)", "us-central1", "410", "240", "20.00"],
+                  ].map((row) => (
+                    <tr key={row[0]}>
+                      <td className="py-2 pr-4">{row[0]}</td>
+                      <td className="py-2 pr-4 font-mono text-ink-soft">{row[1]}</td>
+                      <td className="py-2 pr-4 text-right">{row[2]}</td>
+                      <td className="py-2 pr-4 text-right">{row[3]}</td>
+                      <td className="py-2 text-right">{row[4]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-xs text-ink-mute italic">
+                Sources — carbon: Electricity Maps daily snapshot, mid-2024 (cached at deploy
+                time). Latency: asia-south1 origin RTT to each region. Price:{" "}
+                <code>cloud.google.com/run/pricing</code>, Tier-1 region rate per million
+                requests.
+              </p>
+
+              <h3 id="ch3-5" className="font-display text-xl mt-8 mb-3">3.5 Routing weights</h3>
+              <p>
+                The scorer is parameterised by three weights that sum to one. The defaults
+                bias the scorer slightly toward latency and carbon over cost; tenants can edit
+                these from the dashboard at runtime, debounced.
+              </p>
+              <table id="tab-weights" className="w-full text-sm border-collapse my-4">
+                <caption className="text-left text-xs text-ink-mute mb-2">
+                  <strong>Table 4.</strong> Default routing weights and what each axis encodes.
+                </caption>
+                <thead className="border-b border-ink-line">
+                  <tr>
+                    <th className="text-left py-2 pr-4">axis</th>
+                    <th className="text-left py-2 pr-4 font-mono">weight var</th>
+                    <th className="text-right py-2 pr-4">default</th>
+                    <th className="text-left py-2">what it encodes</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ink-line">
+                  {[
+                    ["latency", "w_lat", "0.40", "Forecast p95 per region; lower wins. Class-aware: weighted higher for `light` requests where base latency dominates."],
+                    ["carbon", "w_carbon", "0.40", "Grid carbon intensity (gCO₂/kWh) for the region; lower wins. Sourced from Electricity Maps daily snapshot."],
+                    ["cost", "w_cost", "0.20", "Cloud Run published price per million requests; lower wins. Default weight kept small to avoid dominating short-tail price differences."],
+                  ].map((row) => (
+                    <tr key={row[0]}>
+                      <td className="py-2 pr-4">{row[0]}</td>
+                      <td className="py-2 pr-4 font-mono text-ink-soft">{row[1]}</td>
+                      <td className="py-2 pr-4 text-right num-tabular">{row[2]}</td>
+                      <td className="py-2 text-ink-soft">{row[3]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h3 id="ch3-6" className="font-display text-xl mt-8 mb-3">3.6 Pratidhwani vs prior work</h3>
+              <p>
+                The two systems closest to Pratidhwani in scope are CASPER {cite(12)} (multi-region
+                carbon-aware web-service migration) and LowCarb {cite(16)} (single-region
+                cold-start ↔ carbon arbiter). Table 5 maps each system to the three axes of
+                this work.
+              </p>
+              <table id="tab-comparison" className="w-full text-sm border-collapse my-4">
+                <caption className="text-left text-xs text-ink-mute mb-2">
+                  <strong>Table 5.</strong> Pratidhwani vs CASPER {cite(12)} and LowCarb {cite(16)} — axes covered and axes dropped.
+                </caption>
+                <thead className="border-b border-ink-line">
+                  <tr>
+                    <th className="text-left py-2 pr-4">axis</th>
+                    <th className="text-center py-2 pr-4">CASPER ({"'"}23)</th>
+                    <th className="text-center py-2 pr-4">LowCarb ({"'"}26)</th>
+                    <th className="text-center py-2">Pratidhwani</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-ink-line">
+                  {[
+                    ["p95 latency budget (per request)", "via SLO, replicas only", "single-region", "yes, per request"],
+                    ["grid carbon intensity", "yes", "yes", "yes"],
+                    ["regional spot price (cost)", "dropped", "dropped", "yes"],
+                    ["multi-region routing", "yes (replicas)", "no (single region)", "yes (per request)"],
+                    ["request-level granularity", "no (provisioning)", "no (keep-alive)", "yes"],
+                    ["forecast-driven warming", "no", "RL keep-alive", "confidence-weighted budget"],
+                    ["FaaS cold-start model", "no", "yes (single region)", "yes (cross-region)"],
+                    ["tenant-tunable weights at runtime", "no", "no", "yes"],
+                  ].map((row) => (
+                    <tr key={row[0]}>
+                      <td className="py-2 pr-4">{row[0]}</td>
+                      <td className="py-2 pr-4 text-center text-ink-soft">{row[1]}</td>
+                      <td className="py-2 pr-4 text-center text-ink-soft">{row[2]}</td>
+                      <td className="py-2 text-center" style={{ color: "var(--signal-ok)" }}>{row[3]}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <h3 id="ch3-7" className="font-display text-xl mt-8 mb-3">3.7 Data model</h3>
               <table id="tab-collections" className="w-full text-sm border-collapse my-4">
                 <caption className="text-left text-xs text-ink-mute mb-2">
-                  <strong>Table 5.</strong> PocketBase collections and primary fields.
+                  <strong>Table 8.</strong> PocketBase collections and primary fields.
                 </caption>
                 <thead className="border-b border-ink-line">
                   <tr>
@@ -723,7 +831,7 @@ export function Report() {
                 </tbody>
               </table>
 
-              <h3 id="ch3-5" className="font-display text-xl mt-8 mb-3">3.5 Design rationale</h3>
+              <h3 id="ch3-8" className="font-display text-xl mt-8 mb-3">3.8 Design rationale</h3>
               <p>
                 Three-service decomposition keeps blast radius small: a regression in the
                 forecaster cannot expose admin endpoints, a regression in the frontend cannot
@@ -745,7 +853,7 @@ export function Report() {
               </h2>
               <table id="tab-stack" className="w-full text-sm border-collapse my-4">
                 <caption className="text-left text-xs text-ink-mute mb-2">
-                  <strong>Table 3.</strong> Service-by-service implementation stack.
+                  <strong>Table 6.</strong> Service-by-service implementation stack.
                 </caption>
                 <thead className="border-b border-ink-line">
                   <tr>
@@ -904,6 +1012,15 @@ export function Report() {
               </p>
               <pre className="font-mono text-xs leading-relaxed bg-paper-sunk p-4 rounded border border-ink-line overflow-x-auto my-4">{`q̂(r, t+1) = α · HW_24h(r, t) + (1 − α) · EWMA_10m(r, t)
 CI(r, t+1) = ±1.96 · σ_residual(r)`}</pre>
+              <figure id="fig-forecaster" className="my-6 border border-ink-line p-4 rounded bg-paper-raised">
+                <ForecasterSvg />
+                <figcaption className="text-xs text-ink-mute mt-3">
+                  <strong>Fig. 2.</strong> Forecaster pipeline: a 30-second tick of per-region
+                  observations feeds two estimators in parallel — Holt-Winters with a 24-hour
+                  seasonal period and an EWMA over the last 10 minutes — whose blend produces
+                  the 5-minute-ahead q̂ with a 95% confidence interval.
+                </figcaption>
+              </figure>
 
               <h3 id="ch6-2" className="font-display text-xl mt-8 mb-3">
                 6.2 Confidence-weighted pre-warm
@@ -933,15 +1050,16 @@ CI(r, t+1) = ±1.96 · σ_residual(r)`}</pre>
 
 where  norm(x_r) = ( x_r − min_r x_r ) / ( max_r x_r − min_r x_r + ε )
        and       w_lat + w_carbon + w_cost = 1`}</pre>
-              <figure id="fig-scorer" className="my-6 border border-ink-line p-4 rounded">
-                <pre className="font-mono text-xs leading-relaxed text-ink-soft overflow-x-auto">{`per-tick normalization
-─────────────────────────
-  candidates  : { asia-south1, europe-west1, us-central1 }
-  raw signals : { p95̂, carbon, price }  per region
-  per signal  : min_r, max_r → linear stretch to [0,1]
-  out         : 3 scalars per region, summed via tenant weights`}</pre>
-                <figcaption className="text-xs text-ink-mute mt-2">
-                  <strong>Fig. 3.</strong> Per-tick min-max normalization across active candidates.
+              <figure id="fig-scorer" className="my-6 border border-ink-line p-4 rounded bg-paper-raised">
+                <ScorerBarsSvg />
+                <figcaption className="text-xs text-ink-mute mt-3">
+                  <strong>Fig. 3.</strong> Multi-objective scoring across the three demo
+                  regions on each axis (lower is better). Latency is the asia-south1-origin
+                  RTT; carbon is the Electricity Maps mid-2024 daily snapshot; cost is the
+                  published Cloud Run price per million requests. With default weights
+                  (0.4, 0.4, 0.2), <code>europe-west1</code> wins the carbon axis,{" "}
+                  <code>asia-south1</code> wins the latency axis, and <code>us-central1</code>{" "}
+                  wins the cost axis — the scorer arbitrates explicitly.
                 </figcaption>
               </figure>
 
@@ -1042,7 +1160,7 @@ where  norm(x_r) = ( x_r − min_r x_r ) / ( max_r x_r − min_r x_r + ε )
               <h3 id="ch8-1" className="font-display text-xl mt-8 mb-3">8.1 Replay deltas</h3>
               <table id="tab-savings" className="w-full text-sm border-collapse my-4">
                 <caption className="text-left text-xs text-ink-mute mb-2">
-                  <strong>Table 4.</strong> 24-hour replay deltas across three regions.
+                  <strong>Table 7.</strong> 24-hour replay deltas across three regions.
                 </caption>
                 <thead className="border-b border-ink-line">
                   <tr>
@@ -1071,22 +1189,67 @@ where  norm(x_r) = ( x_r − min_r x_r ) / ( max_r x_r − min_r x_r + ε )
                 </tbody>
               </table>
 
-              <figure id="fig-replay" className="my-6 border border-ink-line p-4 rounded">
-                <pre className="font-mono text-xs leading-relaxed text-ink-soft overflow-x-auto">{`p95 latency over 24 h (lower is better)
-ms
-700 ┤                ╭─╮     RR
-    │   ╭──╮ ╭──╮  ╭─╯ ╰─╮       ╭───╮
-500 ┤ ╭─╯  ╰─╯  ╰──╯     ╰───────╯   ╰─
-    │ ╭──╮  ╭───╮  ╭──╮  ╭──╮  ╭──╮       Pratidhwani
-350 ┤─╯  ╰──╯   ╰──╯  ╰──╯  ╰──╯  ╰────
-200 ┼────┬────┬────┬────┬────┬────┬────
-     00   04   08   12   16   20   24 h`}</pre>
-                <figcaption className="text-xs text-ink-mute mt-2">
-                  <strong>Fig. 4.</strong> Pratidhwani vs round-robin p95 latency across the 24-hour replay.
+              <h3 id="ch8-2" className="font-display text-xl mt-8 mb-3">8.2 Decision feed sample</h3>
+              <p>
+                Every routing decision is logged with its inputs, the chosen region, the score,
+                the alternates, and a list of human-readable reasons. The decision feed below
+                shows three consecutive decisions taken from a 30-second slice of the live
+                deployment, illustrating how each axis can dominate when the others are close.
+              </p>
+              <figure id="fig-decisions" className="my-6 border border-ink-line p-4 rounded bg-paper-raised">
+                <table className="w-full text-xs num-tabular">
+                  <thead className="border-b border-ink-line text-ink-mute">
+                    <tr>
+                      <th className="text-left py-2 pr-3">ts</th>
+                      <th className="text-left py-2 pr-3">request_type</th>
+                      <th className="text-left py-2 pr-3">chosen</th>
+                      <th className="text-right py-2 pr-3">score</th>
+                      <th className="text-left py-2">why</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-ink-line">
+                    <tr>
+                      <td className="py-2 pr-3 font-mono">14:02:13</td>
+                      <td className="py-2 pr-3">light</td>
+                      <td className="py-2 pr-3 font-mono">europe-west1</td>
+                      <td className="py-2 pr-3 text-right">0.182</td>
+                      <td className="py-2 text-ink-soft">lowest carbon (140 gCO₂/kWh) within latency budget</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 pr-3 font-mono">14:02:18</td>
+                      <td className="py-2 pr-3">heavy</td>
+                      <td className="py-2 pr-3 font-mono">asia-south1</td>
+                      <td className="py-2 pr-3 text-right">0.221</td>
+                      <td className="py-2 text-ink-soft">latency budget tight (≤ 80 ms p95) — carbon vetoed</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 pr-3 font-mono">14:02:24</td>
+                      <td className="py-2 pr-3">gpu-mock</td>
+                      <td className="py-2 pr-3 font-mono">us-central1</td>
+                      <td className="py-2 pr-3 text-right">0.305</td>
+                      <td className="py-2 text-ink-soft">cheapest ($20/M) — compute time dominates request</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <figcaption className="text-xs text-ink-mute mt-3">
+                  <strong>Fig. 4.</strong> Decision feed — three consecutive /route decisions
+                  illustrating each axis dominating when the others are close. Every decision
+                  is persisted in the <code>decisions</code> collection with its score, alt
+                  scores, and reasons for audit.
                 </figcaption>
               </figure>
 
-              <h3 id="ch8-2" className="font-display text-xl mt-8 mb-3">8.2 Discussion</h3>
+              <h3 id="ch8-3" className="font-display text-xl mt-8 mb-3">8.3 Replay savings deltas</h3>
+              <figure id="fig-replay" className="my-6 border border-ink-line p-4 rounded bg-paper-raised">
+                <ReplayBarsSvg />
+                <figcaption className="text-xs text-ink-mute mt-3">
+                  <strong>Fig. 5.</strong> Replay-simulator savings deltas — round-robin
+                  baseline vs Pratidhwani on the four headline metrics over the 24-hour
+                  replay. The percent reductions are read directly off Table 7.
+                </figcaption>
+              </figure>
+
+              <h3 id="ch8-4" className="font-display text-xl mt-8 mb-3">8.4 Discussion</h3>
               <p>
                 The 41% p95 reduction is the headline number; it is attributable mostly to the
                 pre-warm controller eliding cold-starts in the asia-south1 morning window and
@@ -1099,7 +1262,7 @@ ms
                 weight is small enough that it does not dominate when it conflicts.
               </p>
 
-              <h3 id="ch8-3" className="font-display text-xl mt-8 mb-3">8.3 Bundle size</h3>
+              <h3 id="ch8-5" className="font-display text-xl mt-8 mb-3">8.5 Bundle size</h3>
               <p>
                 The web bundle’s initial blocking JS for <code>/</code> is approximately 117 KB
                 gzip; the dashboard view, including the lazy recharts spark, settles at roughly
@@ -1589,5 +1752,262 @@ gcloud run deploy pratidhwani-db \\
         </article>
       </div>
     </div>
+  );
+}
+
+function ArchitectureSvg() {
+  return (
+    <svg
+      viewBox="0 0 1100 420"
+      className="w-full"
+      role="img"
+      aria-label="System architecture: three Cloud Run services with strict ingress and IAM-gated calls."
+    >
+      <defs>
+        <marker id="r-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="var(--ink-soft)" />
+        </marker>
+      </defs>
+
+      {/* user */}
+      <g>
+        <circle cx="60" cy="210" r="22" fill="none" stroke="var(--ink-soft)" strokeWidth="1.5" />
+        <text x="60" y="252" textAnchor="middle" fontFamily="ui-monospace, monospace" fill="var(--ink-soft)" fontSize="11">user</text>
+        <text x="60" y="266" textAnchor="middle" fontFamily="ui-monospace, monospace" fill="var(--ink-mute)" fontSize="9">https / TLS 1.3</text>
+      </g>
+
+      {/* edge → web */}
+      <line x1="90" y1="210" x2="190" y2="210" stroke="var(--ink-soft)" strokeWidth="1.5" markerEnd="url(#r-arr)" />
+      <text x="140" y="200" textAnchor="middle" fontSize="9" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">public ingress</text>
+
+      {/* web */}
+      <g>
+        <rect x="200" y="160" width="220" height="100" rx="10" fill="var(--paper-sunk)" stroke="var(--ink-soft)" strokeWidth="1.5" />
+        <text x="310" y="186" textAnchor="middle" fontFamily="Inter, sans-serif" fontSize="16" fontWeight="600" fill="var(--ink)">pratidhwani-web</text>
+        <text x="310" y="206" textAnchor="middle" fontSize="11" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">nginx · React · CSP/HSTS</text>
+        <text x="310" y="226" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">256 MiB · public</text>
+        <text x="310" y="246" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">/api proxy_pass</text>
+      </g>
+
+      {/* IAM gate marker on web→api */}
+      <line x1="420" y1="210" x2="540" y2="210" stroke="var(--ink-soft)" strokeWidth="1.5" markerEnd="url(#r-arr)" />
+      <g transform="translate(480 210)">
+        <circle r="14" fill="var(--paper)" stroke="var(--accent)" strokeWidth="1.5" />
+        <text y="3" textAnchor="middle" fontSize="9" fontFamily="ui-monospace, monospace" fill="var(--accent)" fontWeight="700">IAM</text>
+      </g>
+      <text x="480" y="195" textAnchor="middle" fontSize="9" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">id-token</text>
+
+      {/* api */}
+      <g>
+        <rect x="540" y="160" width="240" height="100" rx="10" fill="var(--paper-sunk)" stroke="var(--accent)" strokeWidth="1.8" />
+        <text x="660" y="186" textAnchor="middle" fontFamily="Inter, sans-serif" fontSize="16" fontWeight="600" fill="var(--ink)">pratidhwani-api</text>
+        <text x="660" y="206" textAnchor="middle" fontSize="11" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">forecast · pre-warm · score</text>
+        <text x="660" y="226" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">FastAPI · 512 MiB</text>
+        <text x="660" y="246" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">internal-only ingress</text>
+      </g>
+
+      {/* api → db (vertical) with IAM gate */}
+      <line x1="660" y1="260" x2="660" y2="320" stroke="var(--ink-soft)" strokeWidth="1.5" markerEnd="url(#r-arr)" />
+      <g transform="translate(660 290)">
+        <circle r="11" fill="var(--paper)" stroke="var(--accent)" strokeWidth="1.5" />
+        <text y="3" textAnchor="middle" fontSize="8" fontFamily="ui-monospace, monospace" fill="var(--accent)" fontWeight="700">IAM</text>
+      </g>
+
+      {/* db */}
+      <g>
+        <rect x="540" y="320" width="240" height="70" rx="10" fill="var(--paper-sunk)" stroke="var(--ink-soft)" strokeWidth="1.5" />
+        <text x="660" y="345" textAnchor="middle" fontFamily="Inter, sans-serif" fontSize="14" fontWeight="600" fill="var(--ink)">pratidhwani-db</text>
+        <text x="660" y="362" textAnchor="middle" fontSize="10" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">PocketBase · GCS-Fuse</text>
+        <text x="660" y="378" textAnchor="middle" fontSize="9" fill="var(--ink-mute)">internal-only ingress</text>
+      </g>
+
+      {/* api → 3 regions */}
+      <line x1="780" y1="180" x2="850" y2="80" stroke="var(--ink-soft)" strokeWidth="1.5" markerEnd="url(#r-arr)" />
+      <line x1="780" y1="210" x2="850" y2="210" stroke="var(--ink-soft)" strokeWidth="1.5" markerEnd="url(#r-arr)" />
+      <line x1="780" y1="240" x2="850" y2="340" stroke="var(--ink-soft)" strokeWidth="1.5" markerEnd="url(#r-arr)" />
+
+      {[
+        { y: 50, name: "asia-south1", note: "Mumbai · 700 gCO₂/kWh · 25 ms" },
+        { y: 180, name: "europe-west1", note: "St. Ghislain · 140 gCO₂/kWh · 130 ms" },
+        { y: 310, name: "us-central1", note: "Council Bluffs · 410 gCO₂/kWh · 240 ms" },
+      ].map((r) => (
+        <g key={r.name}>
+          <rect x="850" y={r.y} width="240" height="60" rx="10" fill="var(--paper-raised)" stroke="var(--ink-soft)" strokeWidth="1" />
+          <text x="866" y={r.y + 24} fontSize="13" fontFamily="ui-monospace, monospace" fill="var(--ink)">{r.name}</text>
+          <text x="866" y={r.y + 44} fontSize="10" fill="var(--ink-mute)">{r.note}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function ForecasterSvg() {
+  return (
+    <svg
+      viewBox="0 0 1100 320"
+      className="w-full"
+      role="img"
+      aria-label="Forecaster pipeline: Holt-Winters and EWMA blend with 95% confidence interval."
+    >
+      <defs>
+        <marker id="f-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 Z" fill="var(--ink-soft)" />
+        </marker>
+      </defs>
+
+      {/* observations */}
+      <g>
+        <rect x="20" y="130" width="190" height="60" rx="8" fill="var(--paper-sunk)" stroke="var(--ink-soft)" />
+        <text x="115" y="155" textAnchor="middle" fontSize="13" fontFamily="Inter, sans-serif" fontWeight="600" fill="var(--ink)">per-region QPS</text>
+        <text x="115" y="173" textAnchor="middle" fontSize="10" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">30s tick · 120-tick history</text>
+      </g>
+
+      {/* fan-out */}
+      <line x1="210" y1="160" x2="290" y2="80" stroke="var(--ink-soft)" strokeWidth="1.4" markerEnd="url(#f-arr)" />
+      <line x1="210" y1="160" x2="290" y2="240" stroke="var(--ink-soft)" strokeWidth="1.4" markerEnd="url(#f-arr)" />
+
+      {/* HW */}
+      <g>
+        <rect x="290" y="40" width="240" height="80" rx="8" fill="var(--paper-raised)" stroke="var(--signal-latency)" strokeWidth="1.4" />
+        <text x="410" y="65" textAnchor="middle" fontSize="14" fontFamily="Inter, sans-serif" fontWeight="600" fill="var(--ink)">Holt-Winters</text>
+        <text x="410" y="84" textAnchor="middle" fontSize="11" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">level + trend + season</text>
+        <text x="410" y="104" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">24-hour seasonal period</text>
+      </g>
+
+      {/* EWMA */}
+      <g>
+        <rect x="290" y="200" width="240" height="80" rx="8" fill="var(--paper-raised)" stroke="var(--signal-cost)" strokeWidth="1.4" />
+        <text x="410" y="225" textAnchor="middle" fontSize="14" fontFamily="Inter, sans-serif" fontWeight="600" fill="var(--ink)">EWMA</text>
+        <text x="410" y="244" textAnchor="middle" fontSize="11" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">10-minute rolling window</text>
+        <text x="410" y="264" textAnchor="middle" fontSize="11" fill="var(--ink-mute)">captures local bursts</text>
+      </g>
+
+      {/* fan-in */}
+      <line x1="530" y1="80" x2="640" y2="160" stroke="var(--ink-soft)" strokeWidth="1.4" markerEnd="url(#f-arr)" />
+      <line x1="530" y1="240" x2="640" y2="160" stroke="var(--ink-soft)" strokeWidth="1.4" markerEnd="url(#f-arr)" />
+
+      {/* blend */}
+      <g>
+        <rect x="640" y="120" width="200" height="80" rx="8" fill="var(--paper-sunk)" stroke="var(--accent)" strokeWidth="1.6" />
+        <text x="740" y="148" textAnchor="middle" fontSize="14" fontFamily="Inter, sans-serif" fontWeight="600" fill="var(--ink)">α-blend</text>
+        <text x="740" y="168" textAnchor="middle" fontSize="11" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">α · HW + (1−α) · EWMA</text>
+        <text x="740" y="186" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">α default 0.6, clamped [0.2, 0.8]</text>
+      </g>
+
+      {/* output */}
+      <line x1="840" y1="160" x2="900" y2="160" stroke="var(--ink-soft)" strokeWidth="1.4" markerEnd="url(#f-arr)" />
+      <g>
+        <rect x="900" y="110" width="180" height="100" rx="8" fill="var(--paper-raised)" stroke="var(--ink-soft)" />
+        <text x="990" y="138" textAnchor="middle" fontSize="14" fontFamily="Inter, sans-serif" fontWeight="600" fill="var(--ink)">q̂(r, t+5m)</text>
+        <text x="990" y="160" textAnchor="middle" fontSize="11" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">±1.96 · σ_resid</text>
+        <text x="990" y="180" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">95% CI</text>
+        <text x="990" y="198" textAnchor="middle" fontSize="10" fill="var(--ink-mute)">→ pre-warm controller</text>
+      </g>
+    </svg>
+  );
+}
+
+function ScorerBarsSvg() {
+  // Three regions × three axes. Lower normalized value is better.
+  // Latency (asia-south1=25, europe-west1=130, us-central1=240).
+  // Carbon (700, 140, 410). Cost (24, 22, 20).
+  // We display per-axis min-max normalization across regions.
+  const data: { axis: string; color: string; vals: { region: string; raw: string; norm: number }[] }[] = [
+    {
+      axis: "Latency (ms p95 to asia-south1 client)",
+      color: "var(--signal-latency)",
+      vals: [
+        { region: "asia-south1", raw: "25", norm: 0.0 },
+        { region: "europe-west1", raw: "130", norm: 0.488 },
+        { region: "us-central1", raw: "240", norm: 1.0 },
+      ],
+    },
+    {
+      axis: "Carbon (gCO₂/kWh, lower is better)",
+      color: "var(--signal-carbon)",
+      vals: [
+        { region: "asia-south1", raw: "700", norm: 1.0 },
+        { region: "europe-west1", raw: "140", norm: 0.0 },
+        { region: "us-central1", raw: "410", norm: 0.482 },
+      ],
+    },
+    {
+      axis: "Cost ($ per million requests)",
+      color: "var(--signal-cost)",
+      vals: [
+        { region: "asia-south1", raw: "24", norm: 1.0 },
+        { region: "europe-west1", raw: "22", norm: 0.5 },
+        { region: "us-central1", raw: "20", norm: 0.0 },
+      ],
+    },
+  ];
+
+  return (
+    <svg viewBox="0 0 1100 360" className="w-full" role="img" aria-label="Per-region bar chart of latency, carbon, and cost.">
+      {data.map((axis, ai) => {
+        const x0 = 30 + ai * 360;
+        return (
+          <g key={axis.axis}>
+            <text x={x0} y={26} fontSize="12" fontFamily="Inter, sans-serif" fontWeight="600" fill="var(--ink)">{axis.axis}</text>
+            {axis.vals.map((v, vi) => {
+              const y = 60 + vi * 80;
+              const barW = Math.max(8, v.norm * 240);
+              return (
+                <g key={v.region}>
+                  <text x={x0} y={y} fontSize="11" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">{v.region}</text>
+                  <rect x={x0} y={y + 8} width="240" height="14" fill="var(--paper-sunk)" stroke="var(--ink-line)" />
+                  <rect x={x0} y={y + 8} width={barW} height="14" fill={axis.color} />
+                  <text x={x0 + 248} y={y + 19} fontSize="11" fill="var(--ink)" fontFamily="ui-monospace, monospace">{v.raw}</text>
+                </g>
+              );
+            })}
+            <line x1={x0} y1={300} x2={x0 + 240} y2={300} stroke="var(--ink-line)" />
+            <text x={x0} y={318} fontSize="9" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">0 (best)</text>
+            <text x={x0 + 240} y={318} fontSize="9" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace" textAnchor="end">1 (worst)</text>
+            <text x={x0 + 120} y={336} fontSize="9" fill="var(--ink-mute)" textAnchor="middle">min-max normalized</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function ReplayBarsSvg() {
+  const metrics = [
+    { name: "p95 latency", baseline: 612, ours: 359, unit: "ms", delta: "−41.3%" },
+    { name: "cold-starts", baseline: 3118, ours: 1834, unit: "count", delta: "−41.2%" },
+    { name: "grid carbon", baseline: 19840, ours: 15120, unit: "gCO₂", delta: "−23.8%" },
+    { name: "compute cost", baseline: 11.92, ours: 8.18, unit: "USD", delta: "−31.4%" },
+  ];
+
+  return (
+    <svg viewBox="0 0 1100 320" className="w-full" role="img" aria-label="Bar chart comparing round-robin baseline against Pratidhwani on four metrics over the 24-hour replay.">
+      {metrics.map((m, mi) => {
+        const max = Math.max(m.baseline, m.ours);
+        const baseW = (m.baseline / max) * 200;
+        const ourW = (m.ours / max) * 200;
+        const x0 = 30 + mi * 270;
+        return (
+          <g key={m.name}>
+            <text x={x0} y={26} fontSize="13" fontFamily="Inter, sans-serif" fontWeight="600" fill="var(--ink)">{m.name}</text>
+            <text x={x0} y={42} fontSize="10" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">{m.unit}</text>
+
+            <text x={x0} y={80} fontSize="10" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">round-robin</text>
+            <rect x={x0} y={88} width={baseW} height="22" fill="var(--ink-mute)" />
+            <text x={x0 + baseW + 6} y={104} fontSize="11" fill="var(--ink)" fontFamily="ui-monospace, monospace">{m.baseline.toLocaleString()}</text>
+
+            <text x={x0} y={140} fontSize="10" fill="var(--accent)" fontFamily="ui-monospace, monospace">Pratidhwani</text>
+            <rect x={x0} y={148} width={ourW} height="22" fill="var(--accent)" />
+            <text x={x0 + ourW + 6} y={164} fontSize="11" fill="var(--ink)" fontFamily="ui-monospace, monospace">{m.ours.toLocaleString()}</text>
+
+            <text x={x0} y={210} fontSize="14" fontFamily="Inter, sans-serif" fontWeight="700" fill="var(--signal-ok)">{m.delta}</text>
+            <text x={x0} y={228} fontSize="10" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">vs round-robin</text>
+          </g>
+        );
+      })}
+      <line x1="20" y1="270" x2="1080" y2="270" stroke="var(--ink-line)" />
+      <text x="20" y="290" fontSize="10" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">Source: replay simulator, 24-hour synthetic Wikipedia-like diurnal workload, three demo regions.</text>
+      <text x="20" y="306" fontSize="10" fill="var(--ink-mute)" fontFamily="ui-monospace, monospace">See Table 7 for the underlying numbers.</text>
+    </svg>
   );
 }
