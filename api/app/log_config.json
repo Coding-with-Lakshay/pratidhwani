@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "formatters": {
+    "json": {
+      "format": "%(message)s"
+    }
+  },
+  "handlers": {
+    "stdout": {
+      "class": "logging.StreamHandler",
+      "stream": "ext://sys.stdout",
+      "formatter": "json",
+      "level": "INFO"
+    }
+  },
+  "loggers": {
+    "uvicorn":          {"handlers": ["stdout"], "level": "INFO", "propagate": false},
+    "uvicorn.error":    {"handlers": ["stdout"], "level": "INFO", "propagate": false},
+    "uvicorn.access":   {"handlers": ["stdout"], "level": "INFO", "propagate": false},
+    "fastapi":          {"handlers": ["stdout"], "level": "INFO", "propagate": false},
+    "httpx":            {"handlers": ["stdout"], "level": "WARNING", "propagate": false},
+    "httpcore":         {"handlers": ["stdout"], "level": "WARNING", "propagate": false},
+    "pratidhwani":      {"handlers": ["stdout"], "level": "INFO", "propagate": false}
+  },
+  "root": {
+    "handlers": ["stdout"],
+    "level": "INFO"
+  }
+}

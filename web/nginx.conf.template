@@ -1,0 +1,85 @@
+# Pratidhwani web — hardened nginx config rendered at container start by envsubst.
+# Variables: PORT, API_URL, PB_URL.
+
+server {
+    listen ${PORT} default_server;
+    listen [::]:${PORT} default_server;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # ---- Security headers -------------------------------------------------
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=()" always;
+    add_header Cross-Origin-Opener-Policy "same-origin" always;
+    add_header Cross-Origin-Resource-Policy "same-origin" always;
+
+    # CSP — Google Fonts + self only. Adjust if you add third-party scripts.
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' ${API_URL} ${PB_URL}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
+
+    # ---- Compression ------------------------------------------------------
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_min_length 1024;
+    gzip_comp_level 6;
+    gzip_types
+        text/plain text/css text/javascript application/javascript application/x-javascript
+        application/json application/xml application/xml+rss image/svg+xml font/ttf font/otf;
+
+    # If brotli module is loaded by the base image, we'll use it.
+    # nginx:alpine doesn't include it by default, so this stays gzip-only.
+
+    # ---- Health probe -----------------------------------------------------
+    location = /healthz {
+        access_log off;
+        default_type application/json;
+        return 200 '{"ok":true,"service":"pratidhwani-web"}';
+    }
+
+    # ---- API proxy --------------------------------------------------------
+    location /api/ {
+        proxy_pass ${API_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 5s;
+        proxy_send_timeout 60s;
+        proxy_buffering off;
+    }
+
+    # ---- Static assets — long-cached, hashed --------------------------------
+    location /assets/ {
+        access_log off;
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    location ~* \.(?:woff2?|ttf|otf|eot|svg|ico|png|jpe?g|webp|gif)$ {
+        access_log off;
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000" always;
+        try_files $uri =404;
+    }
+
+    # ---- SPA fallback -----------------------------------------------------
+    location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache" always;
+    }
+
+    # Hide nginx version
+    server_tokens off;
+
+    # Reasonable upload cap; the app itself doesn't accept uploads.
+    client_max_body_size 1m;
+}

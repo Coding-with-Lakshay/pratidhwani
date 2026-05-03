@@ -1,0 +1,29 @@
+# Pratidhwani API — pinned dependencies (verified available on PyPI 2026-05-03)
+
+# Core HTTP framework
+fastapi==0.135.1
+uvicorn[standard]==0.42.0
+anyio==4.13.0
+
+# Settings / validation
+pydantic==2.12.5
+pydantic-settings==2.13.1
+
+# HTTP client
+httpx==0.28.1
+
+# Forecasting
+statsmodels==0.14.6
+numpy==2.4.3
+scipy==1.17.1
+
+# Logging / observability
+structlog==25.4.0
+opentelemetry-api==1.38.0
+opentelemetry-sdk==1.38.0
+
+# Testing (kept here so the runtime image can also `pytest` against an
+# integration container; deploy.sh strips dev deps if you choose).
+pytest==8.4.2
+pytest-asyncio==1.3.0
+respx==0.23.1
