@@ -1,6 +1,19 @@
 # Pratidhwani — Predictive Carbon-Aware Serverless Gateway
 
-**Capstone project** — Anshuman Mohanty, GF202217744, B.Tech CSE Cloud Computing.
+**Capstone project** — Anshuman Mohanty, GF202217744, B.Tech CSE Cloud Computing
+Yogananda School of AI, Computers and Data Sciences, Shoolini University, Solan, H.P.
+Capstone Mentor: **Mr. Ashish**.
+
+## Live demo
+
+| Surface | URL |
+|---|---|
+| Dashboard | https://pratidhwani-web-azjqpkmlpa-el.a.run.app |
+| Replay simulator | https://pratidhwani-web-azjqpkmlpa-el.a.run.app/sim |
+| Pitch slide deck | https://pratidhwani-web-azjqpkmlpa-el.a.run.app/pitch |
+| Capstone report | https://pratidhwani-web-azjqpkmlpa-el.a.run.app/report |
+| API (OpenAPI) | https://pratidhwani-api-azjqpkmlpa-el.a.run.app/docs |
+| DB admin | https://pratidhwani-db-azjqpkmlpa-el.a.run.app/_/ |
 
 A drop-in HTTP gateway in front of multi-region Cloud Run services that
 forecasts request bursts, pre-warms the right region, and routes each live
