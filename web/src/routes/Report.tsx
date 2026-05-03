@@ -102,16 +102,25 @@ export function Report() {
                 </li>
               ))}
             </ol>
+            <a
+              href="/Pratidhwani-Capstone-Report.docx"
+              download="Pratidhwani-Capstone-Report.docx"
+              className="btn w-full justify-center mt-4"
+              aria-label="Download capstone report in Microsoft Word format, exact Shoolini template layout"
+            >
+              <span aria-hidden="true">↓</span> Download .docx
+            </a>
             <button
               type="button"
-              className="btn w-full justify-center mt-4"
+              className="btn w-full justify-center mt-2"
               onClick={() => window.print()}
             >
               <span aria-hidden="true">⎙</span> Print to PDF
             </button>
             <p className="text-xs text-ink-mute mt-3 leading-relaxed">
-              Use the browser print dialog to save as A4 PDF. Page breaks before each chapter and
-              the running header are baked in.
+              The .docx is the exact Shoolini template with this report's content
+              substituted in place; open in Word to print or to amend before
+              binding. Use Print to PDF for an A4 print-ready copy of this page.
             </p>
           </div>
         </aside>
