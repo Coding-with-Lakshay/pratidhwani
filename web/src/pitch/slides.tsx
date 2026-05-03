@@ -701,8 +701,15 @@ export const slides: SlideDef[] = [
           </div>
           <div className="grid md:grid-cols-3 gap-6 text-sm">
             <div>
-              <p className="label-eyebrow text-paper/60">project</p>
-              <p className="mt-1 font-mono">pratidhwani-web.run.app</p>
+              <p className="label-eyebrow text-paper/60">live demo</p>
+              <p className="mt-1 font-mono">
+                <a
+                  href="https://pratidhwani.dmj.one"
+                  className="underline decoration-paper/30 hover:decoration-accent"
+                >
+                  pratidhwani.dmj.one
+                </a>
+              </p>
             </div>
             <div>
               <p className="label-eyebrow text-paper/60">contact</p>
