@@ -1,0 +1,43 @@
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - link "Pratidhwani — home" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - img [ref=e9]
+        - generic [ref=e16]: Pratidhwani
+        - generic [ref=e17]: v0.1
+      - navigation "Primary" [ref=e18]:
+        - list [ref=e19]:
+          - listitem [ref=e20]:
+            - link "Dashboard" [ref=e21] [cursor=pointer]:
+              - /url: /
+          - listitem [ref=e22]:
+            - link "Simulator" [ref=e23] [cursor=pointer]:
+              - /url: /sim
+          - listitem [ref=e24]:
+            - link "Pitch" [ref=e25] [cursor=pointer]:
+              - /url: /pitch
+          - listitem [ref=e26]:
+            - link "Report" [ref=e27] [cursor=pointer]:
+              - /url: /report
+      - generic [ref=e28]:
+        - link "Admin" [ref=e29] [cursor=pointer]:
+          - /url: /admin
+          - text: Admin
+          - generic [ref=e30]: ↗
+        - 'button "Theme: Light. Activate to cycle theme." [ref=e31] [cursor=pointer]':
+          - generic [ref=e32]: ◐
+          - generic [ref=e33]: Light
+  - main [ref=e34]:
+    - paragraph [ref=e36]: Loading view…
+  - contentinfo [ref=e37]:
+    - generic [ref=e38]:
+      - paragraph [ref=e39]:
+        - text: Pratidhwani
+        - generic [ref=e40]: ·
+        - text: B.Tech CSE Cloud Computing capstone
+        - generic [ref=e41]: ·
+        - text: Anshuman Mohanty (GF202217744)
+      - paragraph [ref=e42]: ↳ deployed on Cloud Run · asia-south1

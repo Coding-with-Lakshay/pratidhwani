@@ -15,11 +15,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  regions: () => request<Region[]>("/regions"),
-  decisions: (since?: string, limit = 50) =>
-    request<Decision[]>(
-      `/decisions?limit=${limit}${since ? `&since=${encodeURIComponent(since)}` : ""}`,
+  regions: () =>
+    request<Region[] | { items: Region[] }>("/regions").then((d): Region[] =>
+      Array.isArray(d) ? d : Array.isArray(d?.items) ? d.items : [],
     ),
+  decisions: (since?: string, limit = 50) =>
+    request<Decision[] | { items: Decision[] }>(
+      `/decisions?limit=${limit}${since ? `&since=${encodeURIComponent(since)}` : ""}`,
+    ).then((d): Decision[] => (Array.isArray(d) ? d : Array.isArray(d?.items) ? d.items : [])),
   savings: () =>
     request<Record<string, unknown>>("/metrics/savings").then((d): Savings => {
       const num = (k: string) => {

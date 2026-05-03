@@ -71,7 +71,7 @@ export function Layout() {
             Anshuman Mohanty (GF202217744)
           </p>
           <p className="font-mono">
-            <span aria-hidden="true">↳</span> deployed on Cloud Run · asia-south1
+            <span aria-hidden="true">↳</span> deployed on Cloud Run · asia-east1
           </p>
         </div>
       </footer>

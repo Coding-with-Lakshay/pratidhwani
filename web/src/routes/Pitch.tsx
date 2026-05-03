@@ -179,9 +179,10 @@ function SlideStage({
 }
 
 function SlideCanvas({ slide, ctx }: { slide: typeof slides[number]; ctx: SlideContext }) {
+  // Reserve a safe area at the bottom so slide footer content (programme,
+  // institution, etc.) is not occluded by the fixed control bar.
   return (
-    <div className="absolute inset-0">
-      {/* 16:9 frame, scaled to fit viewport */}
+    <div className="absolute inset-0 pb-28 md:pb-32">
       <div className="w-full h-full">{slide.render(ctx)}</div>
     </div>
   );
