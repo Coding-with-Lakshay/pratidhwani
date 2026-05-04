@@ -64,3 +64,5 @@ top of `db/deploy.sh` and `api/deploy.sh` for the full env-var matrix).
 ## Local development
 
 Each service has its own README under `db/`, `api/`, `web/`.
+
+Made in India for #AatmnirbharBharat
