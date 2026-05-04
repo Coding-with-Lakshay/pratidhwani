@@ -1,4 +1,4 @@
-Anshuman Mohanty
-GF202217744
+Lakshay Sharma
+GF202216641
 B.Tech CSE Cloud Computing
-Capstone Mentor: Mr. Ashish
+Capstone Mentor: Dr. Kritika Rana

@@ -68,7 +68,7 @@ export function Layout() {
             <span className="divider-dot" />
             B.Tech CSE Cloud Computing capstone
             <span className="divider-dot" />
-            Anshuman Mohanty (GF202217744)
+            Lakshay Sharma (GF202216641)
           </p>
           <p className="font-mono">
             <span aria-hidden="true">↳</span> deployed on Cloud Run · asia-east1

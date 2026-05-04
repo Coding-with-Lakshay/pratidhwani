@@ -1,5 +1,5 @@
 # Pratidhwani — Predictive Carbon-Aware Serverless Gateway
-**Capstone**: Anshuman Mohanty (GF202217744), B.Tech CSE Cloud Computing
+**Capstone**: Lakshay Sharma (GF202216641), B.Tech CSE Cloud Computing
 **Tagline**: Pre-echoes your traffic. Slashes cold-starts, cost, and carbon.
 
 ## Two research gaps addressed
@@ -68,7 +68,7 @@ All three deployed in `<your-project>` GCP project, region `asia-east1`. Public 
 ## Deploy targets
 - `pratidhwani-db.run.app` — internal-only ingress, GCS bucket `<your-project>-pratidhwani-db` mounted at `/pb_data`
 - `pratidhwani-api.run.app` — internal-only ingress to web; calls db
-- `pratidhwani-web.run.app` — public ingress, the URL Anshuman shares
+- `pratidhwani-web.run.app` — public ingress, the URL Lakshay shares
 
 ## Implementation conventions
 - WCAG 2.2 AAA, RTL-safe, Hindi+English baseline copy on /pitch

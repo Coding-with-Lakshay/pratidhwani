@@ -148,11 +148,11 @@ export const slides: SlideDef[] = [
           >
             <div>
               <p className="label-eyebrow text-paper/60">presented by</p>
-              <p className="mt-1 font-medium">Anshuman Mohanty</p>
+              <p className="mt-1 font-medium">Lakshay Sharma</p>
             </div>
             <div>
               <p className="label-eyebrow text-paper/60">enrolment</p>
-              <p className="mt-1 font-mono">GF202217744</p>
+              <p className="mt-1 font-mono">GF202216641</p>
             </div>
             <div>
               <p className="label-eyebrow text-paper/60">programme</p>
@@ -713,11 +713,11 @@ export const slides: SlideDef[] = [
             </div>
             <div>
               <p className="label-eyebrow text-paper/60">contact</p>
-              <p className="mt-1">Anshuman Mohanty · GF202217744</p>
+              <p className="mt-1">Lakshay Sharma · GF202216641</p>
             </div>
             <div>
               <p className="label-eyebrow text-paper/60">capstone mentor</p>
-              <p className="mt-1 italic text-paper/70">Mr. Ashish</p>
+              <p className="mt-1 italic text-paper/70">Dr. Kritika Rana</p>
             </div>
           </div>
         </div>

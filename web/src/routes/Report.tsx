@@ -150,11 +150,11 @@ export function Report() {
             <div className="mt-16 grid sm:grid-cols-2 gap-8 text-left">
               <div>
                 <p className="label-eyebrow">Name of Student</p>
-                <p className="mt-2 font-medium">Anshuman Mohanty</p>
+                <p className="mt-2 font-medium">Lakshay Sharma</p>
               </div>
               <div>
                 <p className="label-eyebrow">Registration Number</p>
-                <p className="mt-2 font-mono">GF202217744</p>
+                <p className="mt-2 font-mono">GF202216641</p>
               </div>
               <div>
                 <p className="label-eyebrow">Course with Specialization</p>
@@ -166,7 +166,7 @@ export function Report() {
               </div>
               <div className="sm:col-span-2">
                 <p className="label-eyebrow">Capstone Mentor</p>
-                <p className="mt-2 font-medium">Mr. Ashish</p>
+                <p className="mt-2 font-medium">Dr. Kritika Rana</p>
               </div>
             </div>
 
@@ -195,7 +195,7 @@ export function Report() {
                 Acknowledgement
               </h2>
               <p>
-                I am grateful to my Capstone Mentor, Mr. Ashish, for steady guidance and rigorous
+                I am grateful to my Capstone Mentor, Dr. Kritika Rana, for steady guidance and rigorous
                 criticism across the design, implementation, and evaluation of this project. I
                 thank the Yogananda School of AI, Computers and Data Sciences at Shoolini
                 University of Biotechnology and Management Sciences for the academic environment
@@ -210,7 +210,7 @@ export function Report() {
                 family for steady support through the long nights of debugging the cold-start
                 tail.
               </p>
-              <p className="mt-12 text-sm">— Anshuman Mohanty</p>
+              <p className="mt-12 text-sm">— Lakshay Sharma</p>
             </section>
 
             <section

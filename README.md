@@ -1,8 +1,8 @@
 # Pratidhwani — Predictive Carbon-Aware Serverless Gateway
 
-**Capstone project** — Anshuman Mohanty, GF202217744, B.Tech CSE Cloud Computing
+**Capstone project** — Lakshay Sharma, GF202216641, B.Tech CSE Cloud Computing
 Yogananda School of AI, Computers and Data Sciences, Shoolini University, Solan, H.P.
-Capstone Mentor: **Mr. Ashish**.
+Capstone Mentor: **Dr. Kritika Rana**.
 
 A drop-in HTTP gateway in front of multi-region Cloud Run services that
 forecasts request bursts, pre-warms the right region, and routes each live

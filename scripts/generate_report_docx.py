@@ -27,15 +27,15 @@ OUT = ROOT / "web" / "public" / "Pratidhwani-Capstone-Report.docx"
 PROJECT_TITLE = "Pratidhwani — Predictive Carbon-Aware Serverless Gateway"
 
 TITLE_PAGE_FIELDS = [
-    ("Name of Student:", "Anshuman Mohanty"),
-    ("Registration Number:", "GF202217744"),
+    ("Name of Student:", "Lakshay Sharma"),
+    ("Registration Number:", "GF202216641"),
     ("Course with Specialization:", "B.Tech CSE — Cloud Computing"),
     ("Semester:", "VIII (Final)"),
-    ("Capstone Mentor:", "Mr. Ashish"),
+    ("Capstone Mentor:", "Dr. Kritika Rana"),
 ]
 
 ACKNOWLEDGEMENT = """\
-I express my sincere gratitude to my Capstone Mentor, Mr. Ashish, of the \
+I express my sincere gratitude to my Capstone Mentor, Dr. Kritika Rana, of the \
 Yogananda School of AI, Computers and Data Sciences, Shoolini University of \
 Biotechnology and Management Sciences, Solan, H.P., for his patient guidance, \
 constructive criticism, and steady encouragement throughout this capstone. \
@@ -349,6 +349,24 @@ def find_paragraph(doc, predicate) -> int:
     raise ValueError("paragraph not found")
 
 
+def add_page_break_before(p) -> None:
+    """Insert a Word `<w:br w:type="page"/>` at the very start of paragraph p
+    so this paragraph (and the section it begins) starts on a new page when
+    rendered in Word. This is what the original template intends with its
+    long stretches of empty paragraphs between sections — we make it explicit
+    so our inserted body content cannot collapse the section spacing."""
+    from docx.oxml import OxmlElement
+
+    # Create or reuse the first run of the paragraph.
+    if not p.runs:
+        p.add_run("")
+    first_run = p.runs[0]
+    br = OxmlElement("w:br")
+    br.set(qn("w:type"), "page")
+    # Prepend the page break to the run so it triggers the break before the text.
+    first_run._r.insert(0, br)
+
+
 # ---------------------------------------------------------------------------
 # build
 # ---------------------------------------------------------------------------
@@ -374,6 +392,36 @@ def build() -> None:
         for r in doc.paragraphs[idx].runs:
             r.bold = True
 
+    # Section headings that must each begin on a fresh page in Word so the
+    # rendered docx mirrors the template's section pagination regardless of
+    # how much body content we insert under each heading.
+    page_break_headings = [
+        "Acknowledgement",
+        "Abstract",
+        "Table of Contents",
+        "List of Figures",
+        "List of Tables",
+        "Introduction & Problem Definition",
+        "System Requirements",
+        "System Architecture & Design",
+        "Technology Stack",
+        "Implementation",
+        "Algorithms/Models (if applicable)",
+        "Testing",
+        "Results & Performance Analysis",
+        "Deployment",
+        "Challenges & Solutions",
+        "Conclusion & Future Scope",
+        "Questions:",
+        "References",
+    ]
+    for heading in page_break_headings:
+        try:
+            idx = find_paragraph(doc, lambda p, t=heading: p.text.strip() == t)
+        except ValueError:
+            continue
+        add_page_break_before(doc.paragraphs[idx])
+
     # --- Acknowledgement --------------------------------------------------
     ack_idx = find_paragraph(doc, lambda p: p.text.strip() == "Acknowledgement")
     ack_anchor = doc.paragraphs[ack_idx]
@@ -393,12 +441,15 @@ def build() -> None:
         insert_paragraphs_after(anchor, paragraphs)
 
     # --- Q&A: insert answer after each numbered question -----------------
+    # The template renders these as `[List Paragraph]` style. Using the
+    # `Normal` style for answers makes them visually distinct from the
+    # questions (which keep the list-paragraph numbering).
     for question_text, answers in QA:
         idx = find_paragraph(
             doc, lambda p, q=question_text: p.text.strip().startswith(q.strip()[:60])
         )
         anchor = doc.paragraphs[idx]
-        insert_paragraphs_after(anchor, answers)
+        insert_paragraphs_after(anchor, answers, style="Normal")
 
     # --- References -------------------------------------------------------
     ref_idx = find_paragraph(doc, lambda p: p.text.strip() == "References")

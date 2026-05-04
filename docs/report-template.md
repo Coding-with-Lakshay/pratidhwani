@@ -7,11 +7,11 @@ provided `CAPSTONE PROJECT REPORT.docx`).
 - Title of Project: **Pratidhwani — Predictive Carbon-Aware Serverless Gateway**
 - Sub-line: *Synopsis submitted for the partial fulfilment of the degree of*
   **BACHELOR OF TECHNOLOGY (CSE)**
-- Name of Student: **Anshuman Mohanty**
-- Registration Number: **GF202217744**
+- Name of Student: **Lakshay Sharma**
+- Registration Number: **GF202216641**
 - Course with Specialization: **B.Tech CSE — Cloud Computing**
 - Semester: *(placeholder — leave a `[Semester]` token)*
-- Capstone Mentor: **Mr. Ashish**
+- Capstone Mentor: **Dr. Kritika Rana**
 - Footer block:
   - **YOGANANDA SCHOOL OF AI, COMPUTERS AND DATA SCIENCES**
   - **SHOOLINI UNIVERSITY OF BIOTECHNOLOGY AND MANAGEMENT SCIENCES**
